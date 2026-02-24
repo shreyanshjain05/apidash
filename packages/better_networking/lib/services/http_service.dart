@@ -20,20 +20,6 @@ typedef HttpStreamOutput = (
 
 final httpClientManager = HttpClientManager();
 
-/// Applies default headers (User-Agent, Accept) to the given headers map
-/// only if the user hasn't already set them.
-Map<String, String> _applyDefaultHeaders(Map<String, String> headers) {
-  final updatedHeaders = Map<String, String>.from(headers);
-  for (final entry in kDefaultHeaders.entries) {
-    final alreadySet = updatedHeaders.keys
-        .any((key) => key.toLowerCase() == entry.key.toLowerCase());
-    if (!alreadySet) {
-      updatedHeaders[entry.key] = entry.value;
-    }
-  }
-  return updatedHeaders;
-}
-
 Future<(HttpResponse?, Duration?, String?)> sendHttpRequestV1(
   String requestId,
   APIType apiType,
@@ -65,8 +51,7 @@ Future<(HttpResponse?, Duration?, String?)> sendHttpRequestV1(
 
   if (uriRec.$1 != null) {
     Uri requestUrl = uriRec.$1!;
-    Map<String, String> headers =
-        _applyDefaultHeaders(authenticatedRequestModel.enabledHeadersMap);
+    Map<String, String> headers = authenticatedRequestModel.enabledHeadersMap;
     bool overrideContentType = false;
     HttpResponse? response;
     String? body;
@@ -201,16 +186,16 @@ http.Request prepareHttpRequest({
 }) {
   var request = http.Request(method, url);
   if (headers.getValueContentType() != null) {
-    request.headers[HttpHeaders.contentTypeHeader] =
-        headers.getValueContentType()!;
+    request.headers[HttpHeaders.contentTypeHeader] = headers
+        .getValueContentType()!;
     if (!overrideContentType) {
       headers.removeKeyContentType();
     }
   }
   if (body != null) {
     request.body = body;
-    headers[HttpHeaders.contentLengthHeader] =
-        request.bodyBytes.length.toString();
+    headers[HttpHeaders.contentLengthHeader] = request.bodyBytes.length
+        .toString();
   }
   request.headers.addAll(headers);
   return request;
@@ -354,7 +339,7 @@ Future<http.StreamedResponse> makeStreamedRequest({
   required HttpRequestModel requestModel,
   required APIType apiType,
 }) async {
-  final headers = _applyDefaultHeaders(requestModel.enabledHeadersMap);
+  final headers = requestModel.enabledHeadersMap;
   final hasBody = kMethodsWithBody.contains(requestModel.method);
   final isMultipart = requestModel.bodyContentType == ContentType.formdata;
 
